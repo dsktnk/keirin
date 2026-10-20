@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS feed_races (
 CREATE TABLE IF NOT EXISTS feed_riders (
   source TEXT NOT NULL, race_id TEXT NOT NULL, car_no INTEGER NOT NULL,
   player_name TEXT NOT NULL, race_score REAL, rider_class TEXT NOT NULL DEFAULT '',
-  running_style TEXT NOT NULL DEFAULT '', rank INTEGER,
+  running_style TEXT NOT NULL DEFAULT '', rank INTEGER, finish_status TEXT NOT NULL DEFAULT '',
   lineup TEXT NOT NULL DEFAULT '', payout_raw TEXT NOT NULL DEFAULT '',
   pref TEXT NOT NULL DEFAULT '', age INTEGER, term TEXT NOT NULL DEFAULT '',
   updated_at TEXT NOT NULL,
@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS feed_runs (
   race_count INTEGER NOT NULL, new_riders INTEGER NOT NULL,
   updated_riders INTEGER NOT NULL, unchanged_riders INTEGER NOT NULL
 );
-CREATE UNIQUE INDEX IF NOT EXISTS ix_feed_runs_hash
+DROP INDEX IF EXISTS ix_feed_runs_hash;
+CREATE INDEX IF NOT EXISTS ix_feed_runs_hash
 ON feed_runs(source,source_sha256);
 CREATE INDEX IF NOT EXISTS ix_feed_races_date ON feed_races(race_date,venue);
