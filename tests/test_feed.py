@@ -56,6 +56,21 @@ class FeedTests(unittest.TestCase):
     def _feed_exists(self):
         return bool(self.con.execute("SELECT 1 FROM sqlite_master WHERE name='feed_races'").fetchone())
 
+    def test_nonfinisher_marker(self):
+        self.ingest((HEAD+ONE.replace(',1,11.9',',失格,11.9')+TWO).encode())
+        row=self.con.execute('SELECT rank,finish_status FROM feed_riders WHERE car_no=3').fetchone()
+        self.assertIsNone(row['rank'])
+        self.assertEqual(row['finish_status'],'失格')
+
+    def test_change_then_revert(self):
+        a=(HEAD+ONE+TWO).encode()
+        b=(HEAD+ONE.replace('89.1','90.2')+TWO).encode()
+        self.ingest(a); self.ingest(b)
+        r=self.ingest(a)
+        self.assertEqual(r['status'],'imported')
+        self.assertEqual(r['updated'],1)
+        self.assertEqual(self.con.execute('SELECT COUNT(*) FROM feed_runs').fetchone()[0],3)
+
     def test_does_not_create_predictions(self):
         self.ingest()
         self.assertEqual(self.con.execute('SELECT COUNT(*) FROM races').fetchone()[0],0)
