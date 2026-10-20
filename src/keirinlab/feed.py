@@ -94,9 +94,21 @@ def _int(value, what, lo, hi, nullable=False):
     return v
 
 
+def _finish(value):
+    text = _text(value)
+    if not text or text in ('-', '---'):
+        return None, text
+    if text.isdigit():
+        v = int(text)
+        if 1 <= v <= 9:
+            return v, ''
+    # DNF/DQ values are not race positions. Keep original marker for auditing.
+    return None, text[:32]
+
+
 def _score(value):
     s = _text(value)
-    if not s:
+    if not s or s in ('-', '--', '---'):
         return None
     try:
         v = float(s)
@@ -155,7 +167,7 @@ def parse_csv_bytes(data):
         opt = lambda k: _text(row.get(k,''))
         out.append((rid,car,name,_score(opt('race_score')),
                     opt('player_class')[:40],opt('running_style')[:20],
-                    _int(opt('rank'),'rank',1,9,nullable=True),
+                    *_finish(opt('rank')),
                     opt('lineup')[:500],opt('payout')[:500],
                     opt('pref')[:80], _int(opt('age'),'age',16,110,nullable=True),
                     opt('term')[:40]))
@@ -171,7 +183,7 @@ def ingest(con, root, data, *, source, source_ref):
     races, riders = parse_csv_bytes(data) # no modification until validate success
     setup(con,root)
     digest = hashlib.sha256(data).hexdigest()
-    if con.execute('SELECT 1 FROM feed_runs WHERE source=? AND source_sha256=?',
+    if con.execute('SELECT 1 FROM feed_runs WHERE id=(SELECT MAX(id) FROM feed_runs WHERE source=?) AND source_sha256=?',
                    (source,digest)).fetchone():
         return {'status':'unchanged','races':len(races),'rows':len(riders),'new':0,'updated':0,'same':len(riders)}
     at = now_jst()
@@ -188,16 +200,16 @@ def ingest(con, root, data, *, source, source_ref):
                 con.execute('INSERT INTO feed_races VALUES (?,?,?,?,?,?,?)',(source,rid,day,venue,race_no,at,at))
         for rider in riders:
             rid,car = rider[0],rider[1]
-            existing=con.execute('''SELECT player_name,race_score,rider_class,running_style,rank,lineup,payout_raw,pref,age,term
+            existing=con.execute('''SELECT player_name,race_score,rider_class,running_style,rank,finish_status,lineup,payout_raw,pref,age,term
                                      FROM feed_riders WHERE source=? AND race_id=? AND car_no=?''',(source,rid,car)).fetchone()
             fields=rider[2:]
             if existing is None:
                 new += 1
-                con.execute('''INSERT INTO feed_riders (source,race_id,car_no,player_name,race_score,rider_class,running_style,rank,lineup,payout_raw,pref,age,term,updated_at)
-                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',(source,)+rider+(at,))
+                con.execute('''INSERT INTO feed_riders (source,race_id,car_no,player_name,race_score,rider_class,running_style,rank,finish_status,lineup,payout_raw,pref,age,term,updated_at)
+                               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',(source,)+rider+(at,))
             elif tuple(existing)!=fields:
                 updated += 1
-                con.execute('''UPDATE feed_riders SET player_name=?,race_score=?,rider_class=?,running_style=?,rank=?,lineup=?,payout_raw=?,pref=?,age=?,term=?,updated_at=?
+                con.execute('''UPDATE feed_riders SET player_name=?,race_score=?,rider_class=?,running_style=?,rank=?,finish_status=?,lineup=?,payout_raw=?,pref=?,age=?,term=?,updated_at=?
                                WHERE source=? AND race_id=? AND car_no=?''',fields+(at,source,rid,car))
             else:
                 same += 1
