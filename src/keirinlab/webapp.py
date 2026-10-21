@@ -7,6 +7,7 @@ from urllib.parse import parse_qs, urlencode
 from .core import connect, analyze_race, settled_tipster_stats, backtest, now_jst
 from .watch import watch_view
 from .research import research_view
+from .realrace import mira_panel
 
 
 def esc(v): return html.escape(str(v),quote=True)
@@ -157,7 +158,7 @@ def render(db_file, params=None):
         elif view=='tipsters':
             window={'10':10,'30':30,'all':None}.get(params.get('window','all'))
             body=tipsters_view(con,window=window)
-        elif view=='research': body=research_view(con)
+        elif view=='research': body=research_view(con)+mira_panel(con)
         elif view=='watch': body=watch_view(con)
         elif view=='backtest': body=backtest_view(con)
         elif view=='feed': body=feed_view(con)
