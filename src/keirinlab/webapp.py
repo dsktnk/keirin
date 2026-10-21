@@ -31,7 +31,7 @@ def shell(body,tab='dashboard',demo=False):
     links=[('dashboard','ダッシュボード'),('feed','取得データ'),('tipsters','予想師分析'),('research','MIRA予測'),('watch','TIPSTAR追跡'),('backtest','バックテスト')]
     nav=''.join('<a class="{}" href="{}">{}</a>'.format('on' if tab==key else '',esc(url(view=key)),label) for key,label in links)
     banner='<div class="notice"><b>DEMO / 架空データ</b>：選手・オッズ・予想師・払戻は検証用の合成データです。実際の競輪予想ではありません。</div>' if demo else ''
-    return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KEIRIN LAB v0.5</title><style>'+CSS+'</style></head><body><header><div class="logo">KEIRIN LAB<small>PREDICTION × TIPSTERS × VALIDATION</small></div><nav>'+nav+'</nav></header><main>'+banner+body+'<div class="footer">KEIRIN LAB v0.5 ・分析用。投票機能なし。初期の予測は未学習の統計モデルで、確率の較正・収益性は未検証です。</div></main></body></html>'
+    return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KEIRIN LAB v0.7</title><style>'+CSS+'</style></head><body><header><div class="logo">KEIRIN LAB<small>PREDICTION × TIPSTERS × VALIDATION</small></div><nav>'+nav+'</nav></header><main>'+banner+body+'<div class="footer">KEIRIN LAB v0.7 ・分析用。投票機能なし。初期の予測は未学習の統計モデルで、確率の較正・収益性は未検証です。</div></main></body></html>'
 
 
 def stats_tiles(tiles):
