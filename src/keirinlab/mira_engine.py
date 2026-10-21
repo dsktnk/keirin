@@ -196,7 +196,9 @@ def paired_scorecard(con,now=None):
     if not _exists(con,'mira_rule_forecasts'):
         return {'n':0,'baseline':None,'mira':None,'venues':[],'excluded':{}}
     races=con.execute("""
-      SELECT r.id,r.venue,r.start_at,z.first_no,z.second_no,z.finalized_at
+      SELECT r.id,r.venue,r.start_at,z.first_no,z.second_no,z.finalized_at,
+             m.snapshot_at AS decision_at,m.model_version AS decision_model,
+             m.best_combo,m.second_combo,m.third_combo
       FROM races r JOIN results z ON r.id=z.race_id
       JOIN mira_rule_decisions m ON m.race_id=r.id
       WHERE r.is_demo=0 ORDER BY r.start_at,r.id
@@ -222,6 +224,11 @@ def paired_scorecard(con,now=None):
         d2=_valid_prob(mira,expected,cutoff,start)
         if d1 is None or d2 is None:
             excluded['forecast_invalid']+=1;continue
+        mira_top=sorted(d2,key=lambda k:(-d2[k],k))[:3]
+        if (race['decision_at'] != mira[0]['snapshot_at']
+                or race['decision_model'] != mira[0]['model_version']
+                or mira_top != [race['best_combo'],race['second_combo'],race['third_combo']]):
+            excluded['decision_mismatch']+=1;continue
         if any(parse_time(e['captured_at'])>min(parse_time(base[0]['snapshot_at']),parse_time(mira[0]['snapshot_at'])) for e in entries):
             excluded['future_features']+=1;continue
         payout=con.execute("SELECT payout_yen_per_100 FROM payouts WHERE race_id=? AND bet_type='2車単' AND combo=?",(race['id'],winning)).fetchone()
