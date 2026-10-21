@@ -120,6 +120,6 @@ cd /home/dsktnk/www/keirin
 /usr/local/bin/python tools/ingest_daily.py --fetch-today --source-rights-confirmed
 ```
 
-サイトへのネットワークアクセスは1実行につき1日次JSONファイル、1時間以上間隔を設けます。利用条件を確認せずにcronへ登録しないでください。詳しくは `docs/MIRA_V08.md`。
+サイトへのネットワークアクセスは1実行につき1日次JSONファイル、1時間以上間隔を設けます。利用条件を確認せずにcronへ登録しないでください。詳しくは `docs/MIRA_V08.md`。\n\nローカルJSONを保存する場合は出所の`--source-url`も必須（dry-run除く）。
 
 現在は実レース出走表の取得・比較モデルの凍結まで。**MIRAの独自予想、2車単の払戻・確定結果の自動取り込みは未接続**です。GitHub mainのコード更新とSakuraでの自動実行設定は別の作業です。
