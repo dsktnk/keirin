@@ -128,6 +128,15 @@ def ingest(con, cards, observed_at=None):
         # The source may refresh fields later. Never rewrite a previous frozen racecard.
         if con.execute('SELECT 1 FROM races WHERE id=?',(rid,)).fetchone():
             report['unchanged'] += 1
+            # An interrupted prior run might have committed the racecard but not
+            # frozen its baseline. Retry once only while it is still pre-start.
+            if (con.execute('SELECT 1 FROM real_race_sources WHERE race_id=?',(rid,)).fetchone()
+                    and not con.execute('SELECT 1 FROM forecasts WHERE race_id=?',(rid,)).fetchone()):
+                try:
+                    baseline(con,rid,at=at)
+                    report['baseline_created'] += 1
+                except (ValueError,TypeError) as exc:
+                    report['errors'].append({'race_id':rid,'reason':str(exc)})
             continue
         try:
             status=register_race(con,card,at=at)
@@ -137,3 +146,26 @@ def ingest(con, cards, observed_at=None):
         except (ValueError,TypeError) as exc:
             report['errors'].append({'race_id':rid,'reason':str(exc)})
     return report
+
+
+def data_status(con):
+    """Small read-only status panel (safe on old DBs without the v0.8 schema)."""
+    import html
+    from .core import now_jst
+    rows=con.execute("""
+        SELECT COUNT(*) AS total,
+          COUNT(DISTINCT CASE WHEN r.start_at>? THEN r.id END) AS upcoming,
+          MAX(s.captured_at) AS last_captured
+        FROM races r JOIN real_race_sources s ON s.race_id=r.id
+        WHERE r.is_demo=0 AND r.id LIKE 'LIVE_%'
+    """,(now_jst(),)).fetchone() if con.execute(
+        "SELECT 1 FROM sqlite_master WHERE type='table' AND name='real_race_sources'"
+    ).fetchone() else None
+    total=rows['total'] if rows else 0
+    upcoming=rows['upcoming'] if rows else 0
+    stamp=rows['last_captured'] if rows and rows['last_captured'] else '未取得'
+    return ('<section class="panel"><h2>実出走表の取り込み状況</h2>'
+            '<p>登録 <b>{}</b>レース ／ 未発走 <b>{}</b>レース ／ 最終取得 <b>{}</b></p>'
+            '<p class="muted">外部フィード由来の出走表です。現段階のMIRA自動予想とは異なります。'
+            '取得元の利用許可、時点情報、ラインの欠損に注意してください。</p></section>').format(
+                total,upcoming,html.escape(str(stamp)))
