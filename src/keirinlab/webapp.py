@@ -5,6 +5,7 @@ import sys
 from pathlib import Path
 from urllib.parse import parse_qs, urlencode
 from .core import connect, analyze_race, settled_tipster_stats, backtest, now_jst
+from .watch import watch_view
 
 
 def esc(v): return html.escape(str(v),quote=True)
@@ -25,7 +26,7 @@ main{max-width:1160px;margin:24px auto;padding:0 20px}.notice{background:#25334a
 
 
 def shell(body,tab='dashboard',demo=False):
-    links=[('dashboard','ダッシュボード'),('feed','取得データ'),('tipsters','予想師分析'),('backtest','バックテスト')]
+    links=[('dashboard','ダッシュボード'),('feed','取得データ'),('tipsters','予想師分析'),('watch','TIPSTAR追跡'),('backtest','バックテスト')]
     nav=''.join('<a class="{}" href="{}">{}</a>'.format('on' if tab==key else '',esc(url(view=key)),label) for key,label in links)
     banner='<div class="notice"><b>DEMO / 架空データ</b>：選手・オッズ・予想師・払戻は検証用の合成データです。実際の競輪予想ではありません。</div>' if demo else ''
     return '<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KEIRIN LAB v0.4</title><style>'+CSS+'</style></head><body><header><div class="logo">KEIRIN LAB<small>PREDICTION × TIPSTERS × VALIDATION</small></div><nav>'+nav+'</nav></header><main>'+banner+body+'<div class="footer">KEIRIN LAB v0.4 ・分析用。投票機能なし。初期の予測は未学習の統計モデルで、確率の較正・収益性は未検証です。</div></main></body></html>'
@@ -145,7 +146,7 @@ def backtest_view(con):
 def render(db_file, params=None):
     params=params or {}
     view=params.get('view','dashboard')
-    if view not in ('dashboard','feed','race','tipsters','backtest'): view='dashboard'
+    if view not in ('dashboard','feed','race','tipsters','watch','backtest'): view='dashboard'
     with connect(db_file,readonly=True) as con:
         demo=bool(con.execute('SELECT 1 FROM races WHERE is_demo=1 LIMIT 1').fetchone())
         if view=='race':
@@ -155,6 +156,7 @@ def render(db_file, params=None):
         elif view=='tipsters':
             window={'10':10,'30':30,'all':None}.get(params.get('window','all'))
             body=tipsters_view(con,window=window)
+        elif view=='watch': body=watch_view(con)
         elif view=='backtest': body=backtest_view(con)
         elif view=='feed': body=feed_view(con)
         else: body=dashboard(con)
