@@ -100,6 +100,19 @@ class MiraEngineTest(unittest.TestCase):
                          ('2025-09-01T13:00:00+09:00',))
         self.assertEqual(paired_scorecard(self.con,now='2025-09-01T20:00:00+09:00')['n'],0)
 
+    def test_detects_decision_probability_mismatch(self):
+        self.ready()
+        freeze(self.con,CARD['race_id'],at=AT)
+        settle_race(self.con,{'race_id':CARD['race_id'],
+            'first_no':1,'second_no':2,'third_no':3,
+            'payout_yen_per_100':800,
+            'source_url':'https://example.invalid/final'},at='2025-09-01T19:00:00+09:00')
+        self.con.execute('UPDATE mira_rule_decisions SET best_combo=? WHERE race_id=?',
+                         ('31',CARD['race_id']))
+        report=paired_scorecard(self.con,now='2025-09-01T20:00:00+09:00')
+        self.assertEqual(report['n'],0)
+        self.assertEqual(report['excluded']['decision_mismatch'],1)
+
     def test_no_fabricated_line(self):
         a=[dict(e,line_id='') for e in CARD['entrants']]
         p1=compute(a)
