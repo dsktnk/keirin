@@ -1,4 +1,4 @@
-# KEIRIN LAB v0.6 — フォルダに置くだけ版
+# KEIRIN LAB v0.7 — フォルダに置くだけ版
 
 **最初に見るもの：`index.html`**。静的HTMLはCGIなしで動き、デモ用の架空データが表示されます。
 
@@ -95,3 +95,16 @@ cd /home/dsktnk/www/keirin
 データを取り込んだら `/usr/local/bin/python tools/build_static.py` でHTMLを更新できます。詳細は `docs/MIRA_RESEARCH.md`。
 
 テスト: `python -m unittest discover -s tests -v`（GitHub Actionsにもテストを追加）。
+
+
+## v0.7：実レース → MIRA予想 → 結果照合
+
+実出走表をJSONから一件ずつ登録し、発走前に比較モデルとMIRAの判断根拠・買い目を固定。結果確定後に的中率・仮想回収率を研究画面へ表示する運用です。**データ自動取得・AI API接続・投票は未実装**。`tools/real_race.py` が操作CLI、`docs/MIRA_V07.md` が入力JSON形式・運用ガイドです。既存SQLiteは削除・上書きしません。
+
+1. `python3 tools/real_race.py register --file ./local/real_racecard.json`
+2. `python3 tools/real_race.py baseline --race YOUR_RACE_ID`
+3. `python3 tools/real_race.py predict --file ./local/mira_prediction.json`
+4. 結果確定後 `python3 tools/real_race.py settle --file ./local/real_result.json`
+5. `python3 tools/build_static.py` → `research.html`
+
+実レースの検証可能なデータが未入力なら評価0件が正しい状態です。GitHubの`main`を正本として運用してください。
