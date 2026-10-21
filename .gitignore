@@ -9,3 +9,5 @@ __pycache__/
 *.log
 data/*.csv
 local/
+
+data/.tipstar_probe_last
