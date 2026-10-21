@@ -9,7 +9,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src'))
 sys.path.insert(0,str(ROOT/'tools'))
 from keirinlab.core import connect,init_db
-from keirinlab.dailyfeed import candidates,ingest
+from keirinlab.dailyfeed import candidates,ingest,data_status
 from ingest_daily import daily_url,retrieve
 
 OBS='2026-10-21T09:00:00+09:00'
@@ -88,6 +88,21 @@ class DailyFeedTest(unittest.TestCase):
         again=ingest(self.con,cards,OBS)
         self.assertEqual(again['unchanged'],1)
         self.assertEqual(self.con.execute('SELECT COUNT(*) FROM races WHERE id LIKE ?',('LIVE_%',)).fetchone()[0],1)
+    def test_status_read_only(self):
+        self.assertIn('登録 <b>0</b>',data_status(self.con))
+        cards,_=candidates(payload(runner(1,'12:00')),DAY,OBS,url=URL)
+        ingest(self.con,cards,OBS)
+        with connect(self.db,readonly=True) as ro:
+            self.assertIn('登録 <b>1</b>',data_status(ro))
+    def test_recovers_missing_baseline_without_modifying_race(self):
+        cards,_=candidates(payload(runner(1,'12:00')),DAY,OBS,url=URL)
+        ingest(self.con,cards,OBS)
+        self.con.execute("DELETE FROM forecasts WHERE race_id='LIVE_202610211201'")
+        self.con.commit()
+        report=ingest(self.con,cards,OBS)
+        self.assertEqual(report['unchanged'],1)
+        self.assertEqual(report['baseline_created'],1)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM forecasts WHERE race_id='LIVE_202610211201'").fetchone()[0],6)
     def test_source_protection_url(self):
         self.assertEqual(daily_url(DAY),URL)
         with self.assertRaises(ValueError):
