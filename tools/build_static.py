@@ -28,6 +28,7 @@ def static_href(query):
     if view=='backtest': return 'backtest.html'
     if view=='feed': return 'feed.html'
     if view=='watch': return 'tipstar_watch.html'
+    if view=='research': return 'research.html'
     if view=='race':
         rid=params.get('id','')
         if not re.fullmatch(r'[A-Za-z0-9_-]{1,128}',rid):
@@ -51,6 +52,7 @@ def build():
         'backtest.html':{'view':'backtest'},
         'feed.html':{'view':'feed'},
         'tipstar_watch.html':{'view':'watch'},
+        'research.html':{'view':'research'},
     }
     with connect(DB,readonly=True) as con:
         for (rid,) in con.execute('SELECT id FROM races ORDER BY start_at DESC'):
