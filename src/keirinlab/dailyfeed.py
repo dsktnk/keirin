@@ -10,6 +10,7 @@ import re
 from datetime import datetime, timedelta
 from .core import JST, now_jst, parse_time
 from .realrace import register_race, baseline
+from .mira_engine import freeze as freeze_mira_rule
 
 MAX_PAYLOAD = 2 * 1024 * 1024
 RACE_ID = re.compile(r'[A-Za-z0-9_-]{1,50}\Z')
@@ -122,7 +123,7 @@ def candidates(raw, day, observed_at=None, *, margin_minutes=30, horizon_hours=1
 def ingest(con, cards, observed_at=None):
     """Import vetted cards; freeze existing heuristic baseline, never MIRA picks."""
     at = parse_time(observed_at or now_jst()).isoformat(timespec='seconds')
-    report = {'created':0,'unchanged':0,'baseline_created':0,'errors':[]}
+    report = {'created':0,'unchanged':0,'baseline_created':0,'mira_rule_created':0,'errors':[]}
     for card in cards:
         rid = card['race_id']
         # The source may refresh fields later. Never rewrite a previous frozen racecard.
@@ -137,12 +138,24 @@ def ingest(con, cards, observed_at=None):
                     report['baseline_created'] += 1
                 except (ValueError,TypeError) as exc:
                     report['errors'].append({'race_id':rid,'reason':str(exc)})
+            # If a previous run finished the baseline but not the challenger,
+            # freeze the challenger only if the race has not started.
+            if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mira_rule_decisions'").fetchone() or not con.execute(
+                'SELECT 1 FROM mira_rule_decisions WHERE race_id=?',(rid,)
+            ).fetchone():
+                try:
+                    freeze_mira_rule(con,rid,at=at)
+                    report['mira_rule_created'] += 1
+                except (ValueError,TypeError) as exc:
+                    report['errors'].append({'race_id':rid,'reason':str(exc)})
             continue
         try:
             status=register_race(con,card,at=at)
             report['created'] += int(status=='created')
             baseline(con,rid,at=at)
             report['baseline_created'] += 1
+            freeze_mira_rule(con,rid,at=at)
+            report['mira_rule_created'] += 1
         except (ValueError,TypeError) as exc:
             report['errors'].append({'race_id':rid,'reason':str(exc)})
     return report
