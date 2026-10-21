@@ -1,4 +1,4 @@
-# KEIRIN LAB v0.5 — フォルダに置くだけ版
+# KEIRIN LAB v0.6 — フォルダに置くだけ版
 
 **最初に見るもの：`index.html`**。静的HTMLはCGIなしで動き、デモ用の架空データが表示されます。
 
@@ -80,3 +80,18 @@ cd /home/dsktnk/www/keirin
 ```
 
 一度の実行で1ページ、次の実行まで120秒以上。HTTPアクセス不可の場合は失敗します。CGI画面からは実行されず、cronも未設定です。詳細は `docs/TIPSTAR_PROBE.md` を参照してください。
+
+
+## v0.6：MIRAの予測精度を育てる土台
+
+`research.html`（静的版）、`index.cgi?view=research`（CGI版）に研究スコアカードを追加。
+
+- 実戦とデモの予測を混ぜずに検証します。
+- 発走前に固定した2車単の確率分布と確定着順を照合し、1点的中率、上位3点率、対数損失、Brierスコアを計算します。
+- 払戻データが揃ったレースについてのみ仮想100円1点の回収率を表示します。
+- 発走後の予測、未来の出走情報、不完全な分布は検証から除外します。
+- まだデータ取得やMIRAの学習は実装されておらず、実戦評価0件は正常です。
+
+データを取り込んだら `/usr/local/bin/python tools/build_static.py` でHTMLを更新できます。詳細は `docs/MIRA_RESEARCH.md`。
+
+テスト: `python -m unittest discover -s tests -v`（GitHub Actionsにもテストを追加）。
