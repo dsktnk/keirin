@@ -123,7 +123,8 @@ def main(argv=None):
             init_db(con,ROOT/'schema.sql')
             report=ingest(con,cards,observed)
         print('登録:',report['created'],'既存:',report['unchanged'],
-              '比較予測を固定:',report['baseline_created'],'エラー:',len(report['errors']))
+              '比較予測を固定:',report['baseline_created'],
+              'MIRAルール予測を固定:',report['mira_rule_created'],'エラー:',len(report['errors']))
         for error in report['errors']:
             print('SKIPPED:',error['race_id'],error['reason'],file=sys.stderr)
         if report['created'] and not args.no_static:
