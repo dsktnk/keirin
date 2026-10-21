@@ -75,6 +75,7 @@ def main(argv=None):
     source.add_argument('--fetch-today',action='store_true',help='公開GitHub日次JSONを1回だけ取得')
     source.add_argument('--file',type=Path,help='手元の同形式JSONを読み込む（ネットワークなし）')
     p.add_argument('--date',help='出走表の日付。省略時は日本の今日')
+    p.add_argument('--source-url',help='--file利用時に保存する実際の原データ取得元HTTPS URL')
     p.add_argument('--db',default=os.getenv('KEIRIN_LAB_DB',str(ROOT/'data'/'keirin_lab.sqlite3')))
     p.add_argument('--max-races',type=int,default=3,help='発走前レース最大件数（1〜10）')
     p.add_argument('--margin-minutes',type=int,default=30,help='発走までの最低残り時間')
@@ -88,6 +89,10 @@ def main(argv=None):
         # Reading and repeated copying from public GitHub is not automatically authorized.
         if (args.fetch_today or not args.dry_run) and not args.source_rights_confirmed:
             raise ValueError('利用条件を確認のうえ --source-rights-confirmed を指定してください')
+        if args.file and not args.dry_run and not args.source_url:
+            raise ValueError('--fileで実データを保存する場合は --source-url が必要です')
+        if args.fetch_today and args.source_url:
+            raise ValueError('--fetch-todayでは取得元URLを変更できません')
         if args.max_races<1 or args.max_races>10 or args.margin_minutes<0 or args.margin_minutes>180:
             raise ValueError('max-races/margin-minutesが範囲外です')
         if args.file:
@@ -97,9 +102,11 @@ def main(argv=None):
             raw=retrieve(url,ROOT/'data'/'.dailyfeed_last_fetch')
             ref=url
         observed=now_jst()
+        # Never publish a local filesystem path as the asserted data provenance.
+        source_ref=(args.source_url or 'https://example.invalid/dry-run') if args.file else url
         cards,metrics=candidates(raw,day,observed_at=observed,
                                  margin_minutes=args.margin_minutes,
-                                 max_races=args.max_races,url=ref)
+                                 max_races=args.max_races,url=source_ref)
         print('取得先:',ref)
         print('日次レース:',metrics['total'],'条件適合:',metrics['eligible'],
               '今回候補:',len(cards),'除外:',metrics['dropped'])
