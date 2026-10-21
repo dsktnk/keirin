@@ -84,9 +84,12 @@ class DailyFeedTest(unittest.TestCase):
         first=ingest(self.con,cards,OBS)
         self.assertEqual(first['created'],1)
         self.assertEqual(first['baseline_created'],1)
+        self.assertEqual(first['mira_rule_created'],1)
+        self.assertEqual(self.con.execute("SELECT COUNT(*) FROM mira_rule_forecasts WHERE race_id='LIVE_202610211201'").fetchone()[0],6)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM forecasts WHERE race_id='LIVE_202610211201'").fetchone()[0],6)
         again=ingest(self.con,cards,OBS)
         self.assertEqual(again['unchanged'],1)
+        self.assertEqual(again['mira_rule_created'],0)
         self.assertEqual(self.con.execute('SELECT COUNT(*) FROM races WHERE id LIKE ?',('LIVE_%',)).fetchone()[0],1)
     def test_status_read_only(self):
         self.assertIn('登録 <b>0</b>',data_status(self.con))
@@ -102,6 +105,7 @@ class DailyFeedTest(unittest.TestCase):
         report=ingest(self.con,cards,OBS)
         self.assertEqual(report['unchanged'],1)
         self.assertEqual(report['baseline_created'],1)
+        self.assertEqual(report['mira_rule_created'],1)
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM forecasts WHERE race_id='LIVE_202610211201'").fetchone()[0],6)
     def test_source_protection_url(self):
         self.assertEqual(daily_url(DAY),URL)
