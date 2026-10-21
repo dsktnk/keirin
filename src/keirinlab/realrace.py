@@ -213,7 +213,8 @@ def settle_race(con, data, at=None):
 
 
 def mira_summary(con):
-    setup(con)
+    if not con.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='mira_predictions'").fetchone():
+        return {'total':0,'settled':0,'paid':0,'hits':0,'hit_rate':None,'roi':None,'entries':[]}
     rows = con.execute("""
       SELECT m.*, r.venue, r.race_date, r.race_no, r.start_at,
              z.first_no, z.second_no, z.finalized_at,
