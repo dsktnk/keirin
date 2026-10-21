@@ -11,3 +11,6 @@ data/*.csv
 local/
 
 data/.tipstar_probe_last
+
+# v0.8 scheduled fetch throttle state
+data/.dailyfeed_last_fetch
