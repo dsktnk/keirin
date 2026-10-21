@@ -18,3 +18,29 @@ HTMLがJavaScript実行後に描画される場合、HTMLパーサでは表示�
 検証用のローカルHTMLでは `--fixture /path/to/sample.html` を指定できます。ネットワークアクセスは行いません。
 
 本当に長期分析へ進む際は、予想詳細のUUIDが**投稿ごとのID**であり、予想師本人の固定IDとは限らない点に注意し、別途安定した人物識別子を確認してください。
+
+## 2026-10-21 さくらSSHの検証結果
+
+単発診断で HTTP のHTML 7093バイト取得、画面文字16文字、回収率検出0件、詳細リンク0件、`client_rendered_possible: true` を確認。**これは実際のTIPSTARの予想師が0人という意味ではありません。** HTMLに初期データがなく、JavaScript描画が考えられるため、静的HTMLパーサでの観測値抽出は保留にします。
+
+### Chrome上でブラウザ表示を確認
+
+1. 本人のブラウザで同じ予想師一覧URLを開く。
+2. Chromeの開発者ツール → **Console** で次を実行する。
+
+```js
+const body = document.body.innerText;
+console.log({
+  title: document.title,
+  visibleCharacters: body.length,
+  roiLabels: (body.match(/回収率/g) || []).length,
+  predictorLinks: [...document.querySelectorAll('a[href]')]
+      .filter(a => a.href.includes('/race_predictors/')).length
+});
+```
+
+表示文字数が増えていればブラウザのJavaScriptがDOMを更新しています。次に **Network → Fetch/XHR → Reload** で取得元が画面外部から来ているかを確認します。JSONがない場合はページ埋め込みデータやHTML/GraphQL/WebSocketの可能性も残ります。実際のAPI形式が判明するまでは未確定です。
+
+認証済みセッションを閲覧する場合は、**Cookie、Authorizationヘッダー、トークン、完全なHARを共有しないでください。** ステータス、Content-Type、パス（クエリパラメータは伏せる）だけで一次診断が可能です。サービス側が許可しないAPIやアクセス制限の回避は行いません。
+
+さくらCGI上のPythonはブラウザのJavaScriptを自動実行しません。取得方式は①許可されたデータAPI、②ブラウザ環境での画面描画後の観測、のいずれかを実証して選びます。
