@@ -105,7 +105,7 @@ class DailyFeedTest(unittest.TestCase):
         report=ingest(self.con,cards,OBS)
         self.assertEqual(report['unchanged'],1)
         self.assertEqual(report['baseline_created'],1)
-        self.assertEqual(report['mira_rule_created'],1)
+        self.assertEqual(report['mira_rule_created'],0)  # challenger snapshot was already frozen
         self.assertEqual(self.con.execute("SELECT COUNT(*) FROM forecasts WHERE race_id='LIVE_202610211201'").fetchone()[0],6)
     def test_source_protection_url(self):
         self.assertEqual(daily_url(DAY),URL)
