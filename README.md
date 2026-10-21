@@ -68,3 +68,15 @@ TIPSTARとはログイン・自動取得していません。許諾済みの観�
     /usr/local/bin/python tools/build_static.py
 
 閲覧ページ： `tipstar_watch.html` 。詳しくは `docs/TIPSTAR_WATCH.md` を参照してください。
+
+
+## 公開TIPSTARページの単発取得診断（実験）
+
+v0.5には閲覧可能な公開ページがさくらから取得できるかを調べる安全側の診断ツールを追加しました。**自動収集や予想師別データ保存ではありません**。取得先の事前選定と規約の確認が必要です。
+
+```sh
+cd /home/dsktnk/www/keirin
+/usr/local/bin/python tools/probe_tipstar.py --url 'https://tipstar.com/user/keirin/2026-10-16_12_05/race_predictors'
+```
+
+一度の実行で1ページ、次の実行まで120秒以上。HTTPアクセス不可の場合は失敗します。CGI画面からは実行されず、cronも未設定です。詳細は `docs/TIPSTAR_PROBE.md` を参照してください。
