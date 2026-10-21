@@ -1,4 +1,4 @@
 DirectoryIndex index.html
-<FilesMatch "\.(py|pyc|sqlite3|db|sql|csv|md|zip|log|bak)$">
+<FilesMatch "\.(py|pyc|sqlite3|db|sql|csv|json|md|zip|log|bak)$">
   Require all denied
 </FilesMatch>
