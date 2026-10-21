@@ -7,7 +7,7 @@
 1. ZIPをMac上で展開する。
 2. 中身のファイルとフォルダを **`/home/dsktnk/www/keirin/` の直下** に上書きアップロードする。
    - `index.html` が **`/home/dsktnk/www/keirin/index.html`** になること。
-   - `keirin_lab_upload_v0_4/` という名前のフォルダをもう一つ作って入れないこと。
+   - `keirin_lab_upload_v0_5/` という名前のフォルダをもう一つ作って入れないこと。
 3. **https://dsktnk.sakura.ne.jp/keirin/** を開く。ログイン操作もSSHも不要。
 
 表示データは架空です。実際の競輪データはCSV取込操作後に取得状況画面へ反映されます。TIPSTARのデータは取得していません。
