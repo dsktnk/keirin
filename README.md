@@ -1,4 +1,4 @@
-# KEIRIN LAB v0.4 — フォルダに置くだけ版
+# KEIRIN LAB v0.5 — フォルダに置くだけ版
 
 **最初に見るもの：`index.html`**。静的HTMLはCGIなしで動き、デモ用の架空データが表示されます。
 
@@ -58,3 +58,13 @@ CSVインポートや snapshot を行った後、HTMLの内容も更新したい
     /usr/local/bin/python tools/build_static.py
 
 閲覧：`feed.html` / `index.cgi?view=feed`。データソースの公開許諾未確認のため、表示は件数・日付の集計のみ。既存の架空デモレースと履歴取得データは混在させません。
+
+
+## v0.5：TIPSTAR予想師ウォッチ
+
+TIPSTARとはログイン・自動取得していません。許諾済みの観測値を手動CSVで保存し、直近10公開予想の回収率の推移を比較します。
+
+    /usr/local/bin/python tools/watch_tipstar.py import --file /実在する/観測.csv
+    /usr/local/bin/python tools/build_static.py
+
+閲覧ページ： `tipstar_watch.html` 。詳しくは `docs/TIPSTAR_WATCH.md` を参照してください。
