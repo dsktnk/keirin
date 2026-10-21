@@ -65,3 +65,15 @@ git pull origin main
 ## 次段階
 
 許諾が確認できる結果・2車単払戻の取得元を接続し、`tools/real_race.py settle`を自動化する。その後、私が出走表から考えた独自の予想と現行数理モデルを同じレース群で比較する。未来情報が混入していないことを最優先する。
+
+### ローカルに保存済みの同形式JSONを取り込む場合
+
+正しい出典を失わないように、永続保存では `--source-url` を必ず指定します。次は実行形式の例です。存在するファイルと許可された取得元に置き換えてください。
+
+```bash
+/usr/local/bin/python tools/ingest_daily.py --file ./local/source_entries.json \
+  --source-url 'https://raw.githubusercontent.com/snarfnet/keirin-data/main/entries_20261021.json' \
+  --date 2026-10-21 --source-rights-confirmed
+```
+
+※ 過去日や発走後のファイルは、予測用レースとして自動登録されません。`--file --dry-run`なら出典URLなしでも構造確認だけできます。
