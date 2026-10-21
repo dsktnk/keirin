@@ -285,4 +285,26 @@ def panel(con):
         out+='<p class="muted">両モデルで同じ実レースだけを比較。少数サンプルでは優劣を判定できません。</p>'
     else:
         out+='<p class="muted">まだ検証可能な実レースがありません。発走前の凍結予測と確定結果が両方必要です。</p>'
+    if exists and saved:
+        recent=con.execute("""
+          SELECT m.best_combo,m.second_combo,m.third_combo,m.confidence,m.rationale,
+                 m.snapshot_at,r.venue,r.race_no,r.start_at,
+                 z.first_no,z.second_no,z.finalized_at
+          FROM mira_rule_decisions m JOIN races r ON r.id=m.race_id
+          LEFT JOIN results z ON z.race_id=r.id
+          WHERE r.is_demo=0
+          ORDER BY r.start_at DESC LIMIT 20
+        """).fetchall()
+        out+='<h3>保存済みの予想候補（最新20レース）</h3>'
+        out+='<div class="tablewrap"><table><thead><tr><th>競輪場・R</th><th>発走予定</th><th>本命</th><th>対抗</th><th>穴</th><th>結果</th></tr></thead><tbody>'
+        now=parse_time(now_jst())
+        for r in recent:
+            settled=r['finalized_at'] and parse_time(r['finalized_at'])<=now
+            status=('的中' if r['best_combo']==str(r['first_no'])+str(r['second_no']) else '不的中') if settled else '未確定'
+            out+='<tr><td>{} {}R</td><td>{}</td><td><b>{}</b></td><td>{}</td><td>{}</td><td>{}</td></tr>'.format(
+                html.escape(r['venue']),r['race_no'],
+                html.escape(r['start_at']),html.escape(r['best_combo']),
+                html.escape(r['second_combo']),html.escape(r['third_combo']),status)
+        out+='</tbody></table></div>'
+        out+='<p class="muted">これらは実験的なルール予測であり、ChatGPTが個別レースの展開を判断した結果ではありません。</p>'
     return out+'</section>'
