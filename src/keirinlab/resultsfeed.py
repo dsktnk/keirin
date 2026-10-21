@@ -6,7 +6,7 @@ infer results or persist incomplete/tied finishes.
 """
 import json
 import re
-from datetime import datetime
+from datetime import datetime,timedelta
 from .core import now_jst,parse_time
 from .realrace import settle_race
 
@@ -86,8 +86,8 @@ def reconcile(con, raw, day, *, source_url, at=None, dry_run=True):
         record=parsed.get(rid[5:] if rid.startswith('LIVE_') else rid)
         if record is None:
             report['skipped'].append((rid,'missing in result feed'));continue
-        if now<=parse_time(race['start_at']):
-            report['skipped'].append((rid,'race has not started'));continue
+        if now<parse_time(race['start_at'])+timedelta(minutes=15):
+            report['skipped'].append((rid,'result grace period not elapsed'));continue
         if con.execute('SELECT 1 FROM results WHERE race_id=?',(rid,)).fetchone():
             report['already']+=1;continue
         item=dict(race);item['race_id']=rid;item['record']=record
